@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ template "ranchersupport.fullname" . }}-agent
+  labels:
+    app: {{ template "ranchersupport.name" . }}
+    chart: {{ template "ranchersupport.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    kubernetes.io/cluster-service: "true"
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "ranchersupport.name" . }}
+      release: {{ .Release.Name }}
+      kubernetes.io/cluster-service: "true"
+  template:
+    metadata:
+      labels:
+        app: {{ template "ranchersupport.name" . }}-agent
+        release: {{ .Release.Name }}
+        kubernetes.io/cluster-service: "true"
+    spec:
+      serviceAccountName: {{ template "ranchersupport.serviceAccountName" . }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: beta.kubernetes.io/os
+                operator: NotIn
+                values:
+                - windows
+      containers:
+      - name: rancher-support-agent
+        image: "{{ .Values.agent_image.repository }}:{{ .Values.agent_image.tag }}"
+        imagePullPolicy: {{ .Values.agent_image.pullPolicy }}
+        {{- if .Values.agent_image.pullSecrets }}
+          imagePullSecrets:
+          {{- range .Values.agent_image.pullSecrets }}
+          - name: {{ . }}
+          {{- end }}
+        {{- end }}
+        securityContext:
+          allowPrivilegeEscalation: true
+          privileged: true
+        volumeMounts:
+        - mountPath: /mnt/rootfs
+          name: rootfs
+        - mountPath: /var/run/docker.sock
+          name: "dockersock"
+      volumes:
+      - hostPath:
+          path: /
+          type: ""
+        name: rootfs
+      - hostPath:
+          path: /var/run/docker.sock
+          type: ""
+        name: "dockersock"

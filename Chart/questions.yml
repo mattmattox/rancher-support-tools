@@ -1,0 +1,12 @@
+labels:
+  io.cattle.role: cluster # options are cluster/project
+categories:
+  - Rancher
+  - Support
+namespace: rancher-support
+questions:
+- variable: CLUSTER_NAME
+  required: false
+  description: "Friendly name for cluster"
+  type: string
+  label: "Cluster Name"

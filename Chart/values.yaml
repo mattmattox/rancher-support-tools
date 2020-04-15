@@ -1,0 +1,23 @@
+# Default values for RancherSupport
+
+agent_image:
+  repository: docker.io/cube8021/rancher-support-agent
+  tag: v0.0.1
+  pullPolicy: IfNotPresent
+
+manager_image:
+  repository: docker.io/cube8021/rancher-support-manager
+  tag: v0.0.1
+  pullPolicy: IfNotPresent
+
+annotations: {}
+labels:
+  kubernetes.io/name: "ranchersupport"
+
+rbac:
+  create: true
+  clusterAdminRole: true
+
+serviceAccount:
+  create: true
+  name: ranchersupport
