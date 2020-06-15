@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: support-agent
+  namespace: cattle-system
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: support-agent
+  template:
+    metadata:
+      labels:
+        app: support-agent
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: beta.kubernetes.io/os
+                operator: NotIn
+                values:
+                - windows
+      containers:
+        image: REGISTRY/rancher-support-tools-agent:BUILD_NUMBER
+        imagePullPolicy: IfNotPresent
+        name: agent
+        securityContext:
+          privileged: true
+      serviceAccount: cattle
+      serviceAccountName: cattle
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - operator: Exists
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 25%
+    type: RollingUpdate
