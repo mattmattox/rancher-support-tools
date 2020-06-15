@@ -13,7 +13,7 @@ cd ./agent
 docker build -t "$REGISTRY"/rancher-support-tools-agent:"$BUILD_NUMBER" .
 docker push "$REGISTRY"/rancher-support-tools-agent:"$BUILD_NUMBER"
 cd ../
-cat ./workloads.yml | sed "s/BUILD_NUMBER/$BUILD_NUMBER/g" | sed "s/GIT_BRANCH/$GIT_BRANCH_SHORT/g" | sed "s/REGISTRY/$REGISTRY/g" | kubectl apply -f -
+cat ./deployment.yml | sed "s/BUILD_NUMBER/$BUILD_NUMBER/g" | sed "s/GIT_BRANCH/$GIT_BRANCH_SHORT/g" | sed "s/REGISTRY/$REGISTRY/g" | kubectl apply -f -
 
 echo "Cleaning up workspace..."
 git clean -f
