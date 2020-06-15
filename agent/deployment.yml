@@ -1,17 +1,16 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: support-agent
+  name: support
   namespace: cattle-system
 spec:
-  revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app: support-agent
+      app: cattle-agent
   template:
     metadata:
       labels:
-        app: support-agent
+        app: cattle-agent
     spec:
       affinity:
         nodeAffinity:
@@ -23,16 +22,54 @@ spec:
                 values:
                 - windows
       containers:
-        image: REGISTRY/rancher-support-tools-agent:BUILD_NUMBER
+      - env:
+        - name: CATTLE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        image: cube8021/rancher-support-tools-agent:BUILD_NUMBER
         imagePullPolicy: IfNotPresent
-        name: agent
+        name: support
+        resources: {}
         securityContext:
+          capabilities: {}
           privileged: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/kubernetes
+          name: k8s-ssl
+        - mountPath: /var/run
+          name: var-run
+        - mountPath: /run
+          name: run
+        - mountPath: /etc/docker/certs.d
+          name: docker-certs
+      restartPolicy: Always
+      schedulerName: default-scheduler
       serviceAccount: cattle
       serviceAccountName: cattle
       terminationGracePeriodSeconds: 30
       tolerations:
       - operator: Exists
+      volumes:
+      - hostPath:
+          path: /etc/kubernetes
+          type: DirectoryOrCreate
+        name: k8s-ssl
+      - hostPath:
+          path: /var/run
+          type: DirectoryOrCreate
+        name: var-run
+      - hostPath:
+          path: /run
+          type: DirectoryOrCreate
+        name: run
+      - hostPath:
+          path: /etc/docker/certs.d
+          type: DirectoryOrCreate
+        name: docker-certs
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 25%
