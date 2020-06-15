@@ -4,7 +4,7 @@ echo "GIT_COMMIT: $GIT_COMMIT"
 echo "GIT_BRANCH: $GIT_BRANCH_SHORT"
 docker login -u "$DOCKER_REPO_USERNAME" -p "$DOCKER_REPO_PASSWORD"
 
-REGISTRY='index.docker.io/cube8021'
+REGISTRY='cube8021'
 
 echo "Starting auto build process..."
 
