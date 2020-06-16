@@ -33,9 +33,10 @@ RUN ln -sf /proc/self/fd/1 /var/log/apache2/access.log && \
     ln -sf /proc/self/fd/1 /var/log/apache2/error.log
 
 COPY public_html /var/www/src/
+RUN mkdir -p /var/www/src/bin/
 
-ADD *.sh /root/
-RUN chmod +x /root/*.sh
+ADD *.sh /var/www/src/bin/
+RUN chmod +x /var/www/src/bin/*.sh
 
 EXPOSE 80
 
