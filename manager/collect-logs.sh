@@ -45,9 +45,11 @@ do
   echo "Podname: $podname"
   echo "Node: $node"
   echo "IP: $ip"
-  #echo "Testing from node $node"
   echo "Running check-dns..."
-  kubectl -n cattle-system exec $podname -- /root/check-dns.sh | tee $TMPDIR/CoreDNS/check-dns/$node
+  if [[ ! $node == "<none>" ]]
+  then
+    kubectl -n cattle-system exec $podname -- /root/check-dns.sh | tee $TMPDIR/CoreDNS/check-dns/$node
+  fi
 done
 echo "####################################################################################"
 
@@ -91,8 +93,6 @@ then
     kubectl -n kube-system exec -it $pod -c kube-flannel -- iptables --numeric --verbose --list --table mangle > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/iptables-mangle
     echo "Running iptables --numeric --verbose --list --table nat"
     kubectl -n kube-system exec -it $pod -c kube-flannel -- iptables --numeric --verbose --list --table nat > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/iptables-nat
-    echo "Running netstat -antu"
-    kubectl -n kube-system exec -it $pod -c kube-flannel -- netstat -antu > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/netstat
     echo "Grabbing /etc/cni/net.d"
     mkdir -p $TMPDIR/CNI/Flannel/networkinfo/"$pod"/net.d
     kubectl -n kube-system cp -c kube-flannel "$pod":/etc/cni/net.d $TMPDIR/CNI/Flannel/networkinfo/"$pod"/net.d
