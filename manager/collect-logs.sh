@@ -3,6 +3,7 @@
 # Create temp directory
 TMPDIR=$(mktemp -d $MKTEMP_BASEDIR)
 
+echo "####################################################################################"
 echo "Collecting Cluster info..."
 mkdir -p $TMPDIR/clusterinfo
 kubectl cluster-info > $TMPDIR/clusterinfo/summary 2>&1
@@ -12,7 +13,9 @@ kubectl get nodes -o wide > $TMPDIR/clusterinfo/nodes 2>&1
 echo "Collecting Kube-System info..."
 mkdir -p $TMPDIR/kube-system
 kubectl get pods -n kube-system -o wide > $TMPDIR/kube-system/pods 2>&1
+echo "####################################################################################"
 
+echo "####################################################################################"
 echo "Collecting CoreDNS info..."
 mkdir -p $TMPDIR/CoreDNS
 echo "Getting pods..."
@@ -30,6 +33,9 @@ for pod in $(kubectl get pods -n kube-system -l k8s-app=coredns-autoscaler -o na
 do
   kubectl logs $pod -n kube-system > $TMPDIR/CoreDNS/autoscaler-logs/$pod
 done
+echo "####################################################################################"
+
+echo "####################################################################################"
 echo "Testing DNS..."
 mkdir -p $TMPDIR/CoreDNS/check-dns
 kubectl -n cattle-system get pods -l app=support-agent -o wide --no-headers | awk '{print $1,$6,$7}' |\
@@ -38,7 +44,9 @@ do
   echo "Testing from node $node"
   kubectl -n cattle-system exec -it $pod -- /root/check-dns.sh | tee $TMPDIR/CoreDNS/check-dns/$node
 done
+echo "####################################################################################"
 
+echo "####################################################################################"
 echo "Collecting CNI info..."
 if ! kubectl -n kube-system get pods -l k8s-app=flannel | grep 'No resources found'
 then
@@ -89,3 +97,4 @@ then
 else
   echo "Could not CNI"
 fi
+echo "####################################################################################"
