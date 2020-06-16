@@ -46,7 +46,7 @@ done
 
 if [[ -z $InternalHost ]]
 then
-	InternalHost="kube-dns.kube-system.svc.cluster.local"
+  InternalHost="kube-dns.kube-system.svc.cluster.local"
 fi
 
 if [[ -z $InternalIP ]]
@@ -71,33 +71,33 @@ fi
 
 for ip in $(kubectl describe endpoints kube-dns --namespace=kube-system | grep ' Addresses:' | awk '{print $2}' | sed 's/,/\n/g')
 do
-	echo "Checking $ip"
-	InternalOutput=`timeout "$Timeout" dig +short @"$ip" "$InternalHost"`
-        RESULT=$?
-        if [ $RESULT -eq 0 ]
-	then
-		##Internal DNS returned successfully and now we need to check the IP
-		if [[ "$InternalOutput" == "$InternalIP" ]]
-		then
-			echo "Internal DNS is OK"
-		else
-			echo "Internal DNS returned a bad IP"
-		fi
-	else
-		echo "Internal DNS has timed out"
-	fi
-        ExternalOutput=`timeout "$Timeout" dig +short @"$ip" "$ExternalHost"`
-        RESULT=$?
-        if [ $RESULT -eq 0 ]
-        then
-                ##External DNS returned successfully and now we need to check the IP
-                if [[ "$ExternalOutput" == "$ExternalIP" ]]
-                then
-                        echo "External DNS is OK"
-                else
-                        echo "External DNS returned a bad IP"
-                fi
-        else
-                echo "External DNS has timed out"
-        fi
+  echo "Checking $ip"
+  InternalOutput=`timeout "$Timeout" dig +short @"$ip" "$InternalHost"`
+  InternalResult=$?
+  if [ $InternalResult -eq 0 ]
+  then
+    ##Internal DNS returned successfully and now we need to check the IP
+    if [[ "$InternalOutput" == "$InternalIP" ]]
+    then
+      echo "Internal DNS is OK"
+    else
+      echo "Internal DNS returned a bad IP"
+    fi
+  else
+    echo "Internal DNS has timed out"
+  fi
+  ExternalOutput=`timeout "$Timeout" dig +short @"$ip" "$ExternalHost"`
+  ExternalResult=$?
+  if [ $ExternalResult -eq 0 ]
+  then
+    ##External DNS returned successfully and now we need to check the IP
+    if [[ "$ExternalOutput" == "$ExternalIP" ]]
+    then
+      echo "External DNS is OK"
+    else
+      echo "External DNS returned a bad IP"
+    fi
+  else
+    echo "External DNS has timed out"
+  fi
 done

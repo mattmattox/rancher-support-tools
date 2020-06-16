@@ -22,6 +22,6 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s 
 RUN curl -fsSL https://get.docker.com -o get-docker.sh && sh ./get-docker.sh
 
 ##Setup main process
-ADD run.sh /root/run.sh
-ADD check-dns.sh /root/
+ADD *.sh /root/
+RUN chmod +x /root/*.sh
 CMD /root/run.sh
