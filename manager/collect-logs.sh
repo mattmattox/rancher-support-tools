@@ -104,6 +104,47 @@ then
   echo "##############################################"
   echo "Calico found"
   mkdir -p $TMPDIR/CNI/Calico
+  kubectl -n kube-system get pods -l k8s-app=calico-node -o wide > $TMPDIR/CNI/Calico/calico-node-get-pods-wide
+  kubectl -n kube-system get pods -l k8s-app=calico-node -o yaml > $TMPDIR/CNI/Calico/calico-node-get-pods.yaml
+  kubectl -n kube-system get pods -l k8s-app=calico-kube-controllers -o wide > $TMPDIR/CNI/Calico/calico-kube-controllers-get-pods-wide
+  kubectl -n kube-system get pods -l k8s-app=calico-kube-controllers -o yaml > $TMPDIR/CNI/Calico/calico-kube-controllers-get-pods.yaml
+  echo "Collecting ConfigMaps..."
+  mkdir -p $TMPDIR/CNI/Calico/configmap
+  kubectl -n kube-system get configmaps calico-config -o yaml > $TMPDIR/CNI/Calico/configmap/kube-flannel-cfg.yaml
+  kubectl -n kube-system get configmaps rke-network-plugin -o yaml > $TMPDIR/CNI/Calico/configmap/rke-network-plugin.yaml
+  echo "Collecting Logs..."
+  mkdir -p $TMPDIR/CNI/Calico/logs
+  for pod in $(kubectl get pods -n kube-system -l k8s-app=calico-node -o name | awk -F '/' '{print $2}')
+  do
+    mkdir -p $TMPDIR/CNI/Calico/logs/"$pod"
+    kubectl logs $pod -n kube-system calico-node > $TMPDIR/CNI/Calico/logs/"$pod"/calico-node
+    kubectl logs $pod -n kube-system install-cni > $TMPDIR/CNI/Calico/logs/"$pod"/install-cni
+    kubectl logs $pod -n kube-system flexvol-driver > $TMPDIR/CNI/Calico/logs/"$pod"/flexvol-driver
+    kubectl logs $pod -n kube-system upgrade-ipam > $TMPDIR/CNI/Calico/logs/"$pod"/upgrade-ipam
+  done
+  echo "Collecting Network Info..."
+  for pod in $(kubectl get pods -n kube-system -l k8s-app=calico-node -o name | awk -F '/' '{print $2}')
+  do
+    echo "########################"
+    echo "Pod: $pod"
+    mkdir -p $TMPDIR/CNI/Calico/networkinfo/"$pod"
+    echo "Running ifconfig -a"
+    kubectl -n kube-system exec -it $pod -c calico-node -- ifconfig -a > $TMPDIR/CNI/Calico/networkinfo/"$pod"-ifconfig
+    echo "Running route -n"
+    kubectl -n kube-system exec -it $pod -c calico-node -- route -n > $TMPDIR/CNI/Calico/networkinfo/"$pod"/route
+    echo "Running iptables --list"
+    kubectl -n kube-system exec -it $pod -c calico-node -- iptables --list > $TMPDIR/CNI/Calico/networkinfo/"$pod"/iptables-list
+    echo "Running iptables-save"
+    kubectl -n kube-system exec -it $pod -c calico-node -- iptables-save > $TMPDIR/CNI/Calico/networkinfo/"$pod"/iptables-save
+    echo "Running iptables --numeric --verbose --list --table mangle"
+    kubectl -n kube-system exec -it $pod -c calico-node -- iptables --numeric --verbose --list --table mangle > $TMPDIR/CNI/Calico/networkinfo/"$pod"/iptables-mangle
+    echo "Running iptables --numeric --verbose --list --table nat"
+    kubectl -n kube-system exec -it $pod -c calico-node -- iptables --numeric --verbose --list --table nat > $TMPDIR/CNI/Calico/networkinfo/"$pod"/iptables-nat
+    echo "Grabbing /etc/cni/net.d"
+    mkdir -p $TMPDIR/CNI/Calico/networkinfo/"$pod"/net.d
+    kubectl -n kube-system cp -c calico-node "$pod":/etc/cni/net.d $TMPDIR/CNI/Calico/networkinfo/"$pod"/net.d
+    echo "########################"
+  done
   echo "##############################################"
 elif ! kubectl -n kube-system get pods -l k8s-app=canal | grep 'No resources found'
 then
