@@ -33,7 +33,7 @@ then
   Timeout=10s
 fi
 
-for ip in $(kubectl describe endpoints suport-agent --namespace=cattle-system | grep ' Addresses:' | awk '{print $2}' | sed 's/,/\n/g')
+for ip in $(kubectl describe endpoints support-agent --namespace=cattle-system | grep ' Addresses:' | awk '{print $2}' | sed 's/,/\n/g')
 do
   Output=`timeout "$Timeout" ping -c 1 "$ip"`
   Result=$?
