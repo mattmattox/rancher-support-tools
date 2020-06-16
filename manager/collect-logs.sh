@@ -20,7 +20,7 @@ kubectl get pods -n kube-system -l k8s-app=kube-dns -o yaml > $TMPDIR/CoreDNS/co
 kubectl get pods -n kube-system -l k8s-app=coredns-autoscaler -o yaml > $TMPDIR/CoreDNS/autoscaler-pods 2>&1
 echo "Getting coredns logs..."
 mkdir -p $TMPDIR/CoreDNS/coredns-logs
-for pod in $(kubectl get pods -n kube-system -l k8s-app=kube-dns -o name)
+for pod in $(kubectl get pods -n kube-system -l k8s-app=kube-dns -o name | awk -F '/' '{print $2}')
 do
   kubectl logs $pod -n kube-system > $TMPDIR/CoreDNS/coredns-logs/$pod
 done
@@ -35,8 +35,8 @@ mkdir -p $TMPDIR/CoreDNS/check-dns
 kubectl -n cattle-system get pods -l app=support-agent -o wide --no-headers | awk '{print $1,$6,$7}' |\
 while IF=',' read -r podname node ip
 do
-  echo "Testing from $node"
-  kubectl -n cattle-system exec -it $pod /root/check-dns.sh | tee $TMPDIR/CoreDNS/check-dns/$node
+  echo "Testing from node $node"
+  kubectl -n cattle-system exec -it $pod -- /root/check-dns.sh | tee $TMPDIR/CoreDNS/check-dns/$node
 done
 
 echo "Collecting CNI info..."
@@ -49,8 +49,8 @@ then
   kubectl -n kube-system get pods -l k8s-app=flannel -o yaml > $TMPDIR/CNI/Flannel/get-pods.yaml
   echo "Collecting ConfigMaps..."
   mkdir -p $TMPDIR/CNI/Flannel/configmap
-  kubectl -n kube-system configmap kube-flannel-cfg -o yaml $TMPDIR/CNI/Flannel/configmap/kube-flannel-cfg.yaml
-  kubectl -n kube-system configmap 	rke-network-plugin -o yaml $TMPDIR/CNI/Flannel/configmap/rke-network-plugin.yaml
+  kubectl -n kube-system configmaps kube-flannel-cfg -o yaml $TMPDIR/CNI/Flannel/configmap/kube-flannel-cfg.yaml
+  kubectl -n kube-system configmaps rke-network-plugin -o yaml $TMPDIR/CNI/Flannel/configmap/rke-network-plugin.yaml
   echo "Collecting Logs..."
   mkdir -p $TMPDIR/CNI/Flannel/logs
   for pod in $(kubectl get pods -n kube-system -l k8s-app=flannel -o name | awk -F '/' '{print $2}')
