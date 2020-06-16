@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: support-manager
+  namespace: cattle-system
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: support-manager
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: support-manager
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/controlplane
+                operator: In
+                values:
+                - "true"
+            weight: 100
+          - preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/etcd
+                operator: In
+                values:
+                - "true"
+            weight: 1
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: beta.kubernetes.io/os
+                operator: NotIn
+                values:
+                - windows
+      containers:
+        image: cube8021/rancher-support-tools-manager:BUILD_NUMBER
+        imagePullPolicy: IfNotPresent
+        name: cluster-register
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      serviceAccount: cattle
+      serviceAccountName: cattle
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - operator: Exists
