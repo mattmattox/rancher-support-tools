@@ -57,8 +57,8 @@ then
   kubectl -n kube-system get pods -l k8s-app=flannel -o yaml > $TMPDIR/CNI/Flannel/get-pods.yaml
   echo "Collecting ConfigMaps..."
   mkdir -p $TMPDIR/CNI/Flannel/configmap
-  kubectl -n kube-system configmaps kube-flannel-cfg -o yaml $TMPDIR/CNI/Flannel/configmap/kube-flannel-cfg.yaml
-  kubectl -n kube-system configmaps rke-network-plugin -o yaml $TMPDIR/CNI/Flannel/configmap/rke-network-plugin.yaml
+  kubectl -n kube-system get configmaps kube-flannel-cfg -o yaml $TMPDIR/CNI/Flannel/configmap/kube-flannel-cfg.yaml
+  kubectl -n kube-system get configmaps rke-network-plugin -o yaml $TMPDIR/CNI/Flannel/configmap/rke-network-plugin.yaml
   echo "Collecting Logs..."
   mkdir -p $TMPDIR/CNI/Flannel/logs
   for pod in $(kubectl get pods -n kube-system -l k8s-app=flannel -o name | awk -F '/' '{print $2}')
