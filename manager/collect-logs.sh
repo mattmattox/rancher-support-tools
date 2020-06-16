@@ -50,6 +50,7 @@ echo "##########################################################################
 echo "Collecting CNI info..."
 if ! kubectl -n kube-system get pods -l k8s-app=flannel | grep 'No resources found'
 then
+  echo "##############################################"
   echo "Flannel found"
   echo "Collecting Pod info..."
   mkdir -p $TMPDIR/CNI/Flannel
@@ -81,20 +82,28 @@ then
     mkdir -p $TMPDIR/CNI/Flannel/networkinfo/"$pod"/net.d
     kubectl -n kube-system cp "$pod": -c kube-flannel /etc/cni/net.d $TMPDIR/CNI/Flannel/networkinfo/"$pod"/net.d
   done
+  echo "##############################################"
 elif ! kubectl -n kube-system get pods -l k8s-app=calico | grep 'No resources found'
 then
+  echo "##############################################"
   echo "Calico found"
   mkdir -p $TMPDIR/CNI/Calico
+  echo "##############################################"
 elif ! kubectl -n kube-system get pods -l k8s-app=canal | grep 'No resources found'
 then
+  echo "##############################################"
   echo "Canal found"
   mkdir -p $TMPDIR/CNI/Canal
-
+  echo "##############################################"
 elif ! kubectl -n kube-system get pods -l k8s-app=weave | grep 'No resources found'
 then
+  echo "##############################################"
   echo "Weave found"
   mkdir -p $TMPDIR/CNI/Weave
+  echo "##############################################"
 else
+  echo "##############################################"
   echo "Could not CNI"
+  echo "##############################################"
 fi
 echo "####################################################################################"
