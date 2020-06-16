@@ -26,7 +26,7 @@ do
 done
 echo "Getting autoscaler logs..."
 mkdir -p $TMPDIR/CoreDNS/autoscaler-logs
-for pod in $(kubectl get pods -n kube-system -l k8s-app=coredns-autoscaler -o name)
+for pod in $(kubectl get pods -n kube-system -l k8s-app=coredns-autoscaler -o name | awk -F '/' '{print $2}')
 do
   kubectl logs $pod -n kube-system > $TMPDIR/CoreDNS/autoscaler-logs/$pod
 done
@@ -43,10 +43,36 @@ echo "Collecting CNI info..."
 if ! kubectl -n kube-system get pods -l k8s-app=flannel | grep 'No resources found'
 then
   echo "Flannel found"
+  echo "Collecting Pod info..."
   mkdir -p $TMPDIR/CNI/Flannel
   kubectl -n kube-system get pods -l k8s-app=flannel -o wide > $TMPDIR/CNI/Flannel/get-pods-wide
-  kubectl -n kube-system get pods -l k8s-app=flannel -o yaml > $TMPDIR/CNI/Flannel/get-pods-yaml
-
+  kubectl -n kube-system get pods -l k8s-app=flannel -o yaml > $TMPDIR/CNI/Flannel/get-pods.yaml
+  echo "Collecting ConfigMaps..."
+  mkdir -p $TMPDIR/CNI/Flannel/configmap
+  kubectl -n kube-system configmap kube-flannel-cfg -o yaml $TMPDIR/CNI/Flannel/configmap/kube-flannel-cfg.yaml
+  kubectl -n kube-system configmap 	rke-network-plugin -o yaml $TMPDIR/CNI/Flannel/configmap/rke-network-plugin.yaml
+  echo "Collecting Logs..."
+  mkdir -p $TMPDIR/CNI/Flannel/logs
+  for pod in $(kubectl get pods -n kube-system -l k8s-app=flannel -o name | awk -F '/' '{print $2}')
+  do
+    mkdir -p $TMPDIR/CNI/Flannel/logs/"$pod"
+    kubectl logs $pod -n kube-system kube-flannel > $TMPDIR/CNI/Flannel/logs/"$pod"/kube-flannel
+    kubectl logs $pod -n kube-system install-cni > $TMPDIR/CNI/Flannel/logs/"$pod"/install-cni
+  done
+  echo "Collecting Network Info..."
+  for pod in $(kubectl get pods -n kube-system -l k8s-app=flannel -o name | awk -F '/' '{print $2}')
+  do
+    mkdir -p $TMPDIR/CNI/Flannel/networkinfo/"$pod"
+    kubectl -n kube-system exec -it $pod -c kube-flannel -- ifconfig -a > $TMPDIR/CNI/Flannel/networkinfo/"$pod"-ifconfig
+    kubectl -n kube-system exec -it $pod -c kube-flannel -- route -n > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/route
+    kubectl -n kube-system exec -it $pod -c kube-flannel -- iptables --list > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/iptables-list
+    kubectl -n kube-system exec -it $pod -c kube-flannel -- iptables-save > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/iptables-save
+    kubectl -n kube-system exec -it $pod -c kube-flannel -- iptables --numeric --verbose --list --table mangle > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/iptables-mangle
+    kubectl -n kube-system exec -it $pod -c kube-flannel -- iptables --numeric --verbose --list --table nat > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/iptables-nat
+    kubectl -n kube-system exec -it $pod -c kube-flannel -- netstat -antu > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/netstat
+    mkdir -p $TMPDIR/CNI/Flannel/networkinfo/"$pod"/net.d
+    kubectl -n kube-system cp "$pod": -c kube-flannel /etc/cni/net.d $TMPDIR/CNI/Flannel/networkinfo/"$pod"/net.d
+  done
 elif ! kubectl -n kube-system get pods -l k8s-app=calico | grep 'No resources found'
 then
   echo "Calico found"
