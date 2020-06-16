@@ -32,6 +32,9 @@ RUN ln -sf /proc/self/fd/1 /var/log/apache2/access.log && \
 
 COPY public_html /var/www/src/
 
+ADD *.sh /root/
+RUN chmod +x /root/*.sh
+
 EXPOSE 80
 
 WORKDIR /var/www/src

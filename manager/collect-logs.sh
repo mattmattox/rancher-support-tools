@@ -13,12 +13,6 @@ echo "Collecting Kube-System info..."
 mkdir -p $TMPDIR/kube-system
 kubectl get pods -n kube-system -o wide > $TMPDIR/kube-system/pods 2>&1
 
-echo "Collecting CNI/overlay info..."
-#Canal
-#Flannel
-#Calico
-#Weave
-
 echo "Collecting CoreDNS info..."
 mkdir -p $TMPDIR/CoreDNS
 echo "Getting pods..."
@@ -37,18 +31,35 @@ do
   kubectl logs $pod -n kube-system > $TMPDIR/CoreDNS/autoscaler-logs/$pod
 done
 echo "Testing DNS..."
-InternalHost="kube-dns.kube-system"
-InternalIP="$(kubectl get services -n kube-system kube-dns -o yaml | grep 'clusterIP:' | awk '{print $2}')"
-ExternalHost="a.root-servers.net"
-ExternalIP="198.41.0.4"
-Timeout="10s"
-kubectl exec -it
+mkdir -p $TMPDIR/CoreDNS/check-dns
+kubectl -n cattle-system get pods -l app=support-agent -o wide --no-headers | awk '{print $1,$6,$7}' |\
+while IF=',' read -r podname node ip
+do
+  echo "Testing from $node"
+  kubectl -n cattle-system exec -it $pod /root/check-dns.sh | tee $TMPDIR/CoreDNS/check-dns/$node
+done
 
 echo "Collecting CNI info..."
-#Flannel
+if ! kubectl -n kube-system get pods -l k8s-app=flannel | grep 'No resources found'
+then
+  echo "Flannel found"
+  mkdir -p $TMPDIR/CNI/Flannel
+  kubectl -n kube-system get pods -l k8s-app=flannel -o wide > $TMPDIR/CNI/Flannel/get-pods-wide
+  kubectl -n kube-system get pods -l k8s-app=flannel -o yaml > $TMPDIR/CNI/Flannel/get-pods-yaml
 
-#Calico
+elif ! kubectl -n kube-system get pods -l k8s-app=calico | grep 'No resources found'
+then
+  echo "Calico found"
+  mkdir -p $TMPDIR/CNI/Calico
+elif ! kubectl -n kube-system get pods -l k8s-app=canal | grep 'No resources found'
+then
+  echo "Canal found"
+  mkdir -p $TMPDIR/CNI/Canal
 
-#Canal
-
-#Weave
+elif ! kubectl -n kube-system get pods -l k8s-app=weave | grep 'No resources found'
+then
+  echo "Weave found"
+  mkdir -p $TMPDIR/CNI/Weave
+else
+  echo "Could not CNI"
+fi
