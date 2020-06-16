@@ -3,6 +3,7 @@
 # Create temp directory
 TMPDIR=$(mktemp -d $MKTEMP_BASEDIR)
 
+
 echo "####################################################################################"
 echo "Collecting Cluster info..."
 mkdir -p $TMPDIR/clusterinfo
@@ -75,16 +76,27 @@ then
   echo "Collecting Network Info..."
   for pod in $(kubectl get pods -n kube-system -l k8s-app=flannel -o name | awk -F '/' '{print $2}')
   do
+    echo "########################"
+    echo "Pod: $pod"
     mkdir -p $TMPDIR/CNI/Flannel/networkinfo/"$pod"
+    echo "Running ifconfig -a"
     kubectl -n kube-system exec -it $pod -c kube-flannel -- ifconfig -a > $TMPDIR/CNI/Flannel/networkinfo/"$pod"-ifconfig
+    echo "Running route -n"
     kubectl -n kube-system exec -it $pod -c kube-flannel -- route -n > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/route
+    echo "Running iptables --list"
     kubectl -n kube-system exec -it $pod -c kube-flannel -- iptables --list > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/iptables-list
+    echo "Running iptables-save"
     kubectl -n kube-system exec -it $pod -c kube-flannel -- iptables-save > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/iptables-save
+    echo "Running iptables --numeric --verbose --list --table mangle"
     kubectl -n kube-system exec -it $pod -c kube-flannel -- iptables --numeric --verbose --list --table mangle > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/iptables-mangle
+    echo "Running iptables --numeric --verbose --list --table nat"
     kubectl -n kube-system exec -it $pod -c kube-flannel -- iptables --numeric --verbose --list --table nat > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/iptables-nat
+    echo "Running netstat -antu"
     kubectl -n kube-system exec -it $pod -c kube-flannel -- netstat -antu > $TMPDIR/CNI/Flannel/networkinfo/"$pod"/netstat
+    echo "Grabbing /etc/cni/net.d"
     mkdir -p $TMPDIR/CNI/Flannel/networkinfo/"$pod"/net.d
-    kubectl -n kube-system cp "$pod": -c kube-flannel /etc/cni/net.d $TMPDIR/CNI/Flannel/networkinfo/"$pod"/net.d
+    kubectl -n kube-system cp -c kube-flannel "$pod":/etc/cni/net.d $TMPDIR/CNI/Flannel/networkinfo/"$pod"/net.d
+    echo "########################"
   done
   echo "##############################################"
 elif ! kubectl -n kube-system get pods -l k8s-app=calico | grep 'No resources found'
