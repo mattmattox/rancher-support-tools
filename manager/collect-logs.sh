@@ -46,7 +46,7 @@ do
   echo "IP: $ip"
   #echo "Testing from node $node"
   echo "Running check-dns..."
-  kubectl -n cattle-system exec -it $podname -- /root/check-dns.sh | tee $TMPDIR/CoreDNS/check-dns/$node
+  kubectl -n cattle-system exec $podname -- /root/check-dns.sh | tee $TMPDIR/CoreDNS/check-dns/$node
 done
 echo "####################################################################################"
 
