@@ -6,11 +6,11 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: cattle-agent
+      app: support-agent
   template:
     metadata:
       labels:
-        app: cattle-agent
+        app: support-agent
     spec:
       affinity:
         nodeAffinity:
