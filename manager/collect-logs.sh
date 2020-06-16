@@ -38,6 +38,7 @@ echo "##########################################################################
 echo "####################################################################################"
 echo "Testing DNS..."
 mkdir -p $TMPDIR/CoreDNS/check-dns
+kubectl -n cattle-system get pods -l app=support-agent -o wide --no-headers | awk '{print $1,$6,$7}' |\
 while IF=',' read -r podname node ip
 do
   echo "Podname: $podname"
