@@ -38,10 +38,13 @@ echo "##########################################################################
 echo "####################################################################################"
 echo "Testing DNS..."
 mkdir -p $TMPDIR/CoreDNS/check-dns
-kubectl -n cattle-system get pods -l app=support-agent -o wide --no-headers | awk '{print $1,$6,$7}' |\
 while IF=',' read -r podname node ip
 do
-  echo "Testing from node $node"
+  echo "Podname: $podname"
+  echo "Node: $node"
+  echo "IP: $ip"
+  #echo "Testing from node $node"
+  echo "Running check-dns..."
   kubectl -n cattle-system exec -it $pod -- /root/check-dns.sh | tee $TMPDIR/CoreDNS/check-dns/$node
 done
 echo "####################################################################################"
