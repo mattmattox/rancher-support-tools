@@ -33,14 +33,15 @@ then
   Timeout=10s
 fi
 
-for ip in $(kubectl describe endpoints support-agent --namespace=cattle-system | grep ' Addresses:' | awk '{print $2}' | sed 's/,/\n/g')
+kubectl -n cattle-system get pods -l app=support-agent -o wide --no-headers | awk '{print $1,$6,$7}' |\
+while IF=',' read -r podname node ip
 do
   Output=`timeout "$Timeout" ping -c 1 "$ip"`
   Result=$?
   if [ $Result -eq 0 ]
   then
-    echo "$ip is pingable"
+    echo "Node $node is pingable using overlay"
   else
-    echo "$ip is not pingable"
+    echo "Node $node is not pingable using overlay"
   fi
 done
