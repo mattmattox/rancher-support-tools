@@ -13,6 +13,7 @@ iputils-ping \
 ca-certificates \
 git \
 dnsutils \
+jq \
 && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ##Installing kubectl
