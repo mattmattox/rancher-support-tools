@@ -14,6 +14,7 @@ ca-certificates \
 git \
 dnsutils \
 jq \
+nano \
 && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ##Installing kubectl
