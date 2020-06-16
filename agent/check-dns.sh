@@ -59,7 +59,7 @@ then
   ExternalHost="a.root-servers.net"
 fi
 
-if [[ -z $InternalHost ]]
+if [[ -z $ExternalIP ]]
 then
   ExternalIP="198.41.0.4"
 fi
