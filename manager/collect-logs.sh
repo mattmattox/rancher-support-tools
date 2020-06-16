@@ -143,6 +143,9 @@ then
     echo "Grabbing /etc/cni/net.d"
     mkdir -p $TMPDIR/CNI/Calico/networkinfo/"$pod"/net.d
     kubectl -n kube-system cp -c calico-node "$pod":/etc/cni/net.d $TMPDIR/CNI/Calico/networkinfo/"$pod"/net.d
+    echo "Grabbing /etc/calico"
+    mkdir -p $TMPDIR/CNI/Calico/networkinfo/"$pod"/calico-etc-config
+    kubectl -n kube-system cp -c calico-node "$pod":/etc/calico $TMPDIR/CNI/Calico/networkinfo/"$pod"/calico-etc-config
     echo "########################"
   done
   echo "##############################################"
