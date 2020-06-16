@@ -17,7 +17,9 @@ curl \
 && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ##Installing kubectl
-RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl && mv kubectl /bin/kubectl && chmod +x /bin/kubectl
+#RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl && mv kubectl /bin/kubectl && chmod +x /bin/kubectl
+ADD kubectl /bin/
+RUN chmod +x /bin/kubectl
 
 RUN a2enmod rewrite expires
 RUN echo "ServerName localhost" | tee /etc/apache2/conf-available/servername.conf

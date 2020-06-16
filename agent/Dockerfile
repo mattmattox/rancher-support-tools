@@ -18,7 +18,9 @@ nano \
 && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ##Installing kubectl
-RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl && mv kubectl /bin/kubectl && chmod +x /bin/kubectl
+#RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl && mv kubectl /bin/kubectl && chmod +x /bin/kubectl
+ADD kubectl /bin/     
+RUN chmod +x /bin/kubectl
 
 ##Install Docker client
 RUN curl -fsSL https://get.docker.com -o get-docker.sh && sh ./get-docker.sh
