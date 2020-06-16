@@ -40,8 +40,8 @@ do
   Result=$?
   if [ $Result -eq 0 ]
   then
-    echo "Node $node is pingable using overlay"
+    echo "Node $node / $ip is pingable using overlay"
   else
-    echo "Node $node is not pingable using overlay"
+    echo "Node $node / $ip is not pingable using overlay"
   fi
 done
