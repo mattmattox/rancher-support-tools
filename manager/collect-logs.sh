@@ -55,7 +55,7 @@ echo "##########################################################################
 
 echo "####################################################################################"
 echo "Collecting CNI info..."
-if [[ ! `kubectl -n kube-system get pods -l k8s-app=flannel` == 'No resources found' ]]
+if [[ `kubectl -n kube-system get pods -l k8s-app=flannel | wc -l` -gt 0 ]];
 then
   echo "##############################################"
   echo "Flannel found"
@@ -99,7 +99,7 @@ then
     echo "########################"
   done
   echo "##############################################"
-elif ! kubectl -n kube-system get pods -l k8s-app=calico | grep 'No resources found'
+elif [[ `kubectl -n kube-system get pods -l k8s-app=calico-node | wc -l` -gt 0 ]];
 then
   echo "##############################################"
   echo "Calico found"
@@ -149,13 +149,13 @@ then
     echo "########################"
   done
   echo "##############################################"
-elif ! kubectl -n kube-system get pods -l k8s-app=canal | grep 'No resources found'
+elif [[ `kubectl -n kube-system get pods -l k8s-app=canal | wc -l` -gt 0 ]];
 then
   echo "##############################################"
   echo "Canal found"
   mkdir -p $TMPDIR/CNI/Canal
   echo "##############################################"
-elif ! kubectl -n kube-system get pods -l k8s-app=weave | grep 'No resources found'
+elif [[ `kubectl -n kube-system get pods -l k8s-app=weave | wc -l` -gt 0 ]];
 then
   echo "##############################################"
   echo "Weave found"
