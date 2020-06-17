@@ -17,43 +17,6 @@ kubectl get pods -n kube-system -o wide > $TMPDIR/kube-system/pods 2>&1
 echo "####################################################################################"
 
 echo "####################################################################################"
-echo "Collecting CoreDNS info..."
-mkdir -p $TMPDIR/CoreDNS
-echo "Getting pods..."
-kubectl get pods -n kube-system -l k8s-app=kube-dns -o yaml > $TMPDIR/CoreDNS/coredns-pods 2>&1
-kubectl get pods -n kube-system -l k8s-app=coredns-autoscaler -o yaml > $TMPDIR/CoreDNS/autoscaler-pods 2>&1
-echo "Getting coredns logs..."
-mkdir -p $TMPDIR/CoreDNS/coredns-logs
-for pod in $(kubectl get pods -n kube-system -l k8s-app=kube-dns -o name | awk -F '/' '{print $2}')
-do
-  kubectl logs $pod -n kube-system > $TMPDIR/CoreDNS/coredns-logs/$pod
-done
-echo "Getting autoscaler logs..."
-mkdir -p $TMPDIR/CoreDNS/autoscaler-logs
-for pod in $(kubectl get pods -n kube-system -l k8s-app=coredns-autoscaler -o name | awk -F '/' '{print $2}')
-do
-  kubectl logs $pod -n kube-system > $TMPDIR/CoreDNS/autoscaler-logs/$pod
-done
-echo "####################################################################################"
-
-echo "####################################################################################"
-echo "Testing DNS..."
-mkdir -p $TMPDIR/CoreDNS/check-dns
-kubectl -n cattle-system get pods -l app=support-agent -o wide --no-headers | awk '{print $1,$6,$7}' |\
-while IF=',' read -r podname node ip
-do
-  echo "Podname: $podname"
-  echo "Node: $node"
-  echo "IP: $ip"
-  echo "Running check-dns..."
-  if [[ ! $node == "<none>" ]]
-  then
-    kubectl -n cattle-system exec $podname -- /root/check-dns.sh | tee $TMPDIR/CoreDNS/check-dns/$node
-  fi
-done
-echo "####################################################################################"
-
-echo "####################################################################################"
 echo "Collecting CNI info..."
 if [[ `kubectl -n kube-system get pods -l k8s-app=flannel | wc -l` -gt 0 ]];
 then
@@ -190,7 +153,7 @@ then
     kubectl -n kube-system exec -it $pod -c calico-node -- iptables --numeric --verbose --list --table nat > $TMPDIR/CNI/Canal/networkinfo/"$pod"/iptables-nat
     echo "Grabbing /etc/cni/net.d"
     #mkdir -p $TMPDIR/CNI/Canal/networkinfo/"$pod"/net.d
-    kubectl -n kube-system cp -c calico-node "$pod":/etc/cni/net.d $TMPDIR/CNI/Canal/networkinfo/"$pod"/net.d
+    kubectl -n kube-system cp -c calico-node "$pod":/etc/cni/ $TMPDIR/CNI/Canal/networkinfo/"$pod"/cni.d
     echo "Grabbing /etc/calico"
     #mkdir -p $TMPDIR/CNI/Calico/networkinfo/"$pod"/calico-etc-config
     kubectl -n kube-system cp -c calico-node "$pod":/etc/calico $TMPDIR/CNI/Canal/networkinfo/"$pod"/calico-etc-config
@@ -208,4 +171,41 @@ else
   echo "Could not CNI"
   echo "##############################################"
 fi
+echo "####################################################################################"
+
+echo "####################################################################################"
+echo "Collecting CoreDNS info..."
+mkdir -p $TMPDIR/CoreDNS
+echo "Getting pods..."
+kubectl get pods -n kube-system -l k8s-app=kube-dns -o yaml > $TMPDIR/CoreDNS/coredns-pods 2>&1
+kubectl get pods -n kube-system -l k8s-app=coredns-autoscaler -o yaml > $TMPDIR/CoreDNS/autoscaler-pods 2>&1
+echo "Getting coredns logs..."
+mkdir -p $TMPDIR/CoreDNS/coredns-logs
+for pod in $(kubectl get pods -n kube-system -l k8s-app=kube-dns -o name | awk -F '/' '{print $2}')
+do
+  kubectl logs $pod -n kube-system > $TMPDIR/CoreDNS/coredns-logs/$pod
+done
+echo "Getting autoscaler logs..."
+mkdir -p $TMPDIR/CoreDNS/autoscaler-logs
+for pod in $(kubectl get pods -n kube-system -l k8s-app=coredns-autoscaler -o name | awk -F '/' '{print $2}')
+do
+  kubectl logs $pod -n kube-system > $TMPDIR/CoreDNS/autoscaler-logs/$pod
+done
+echo "####################################################################################"
+
+echo "####################################################################################"
+echo "Testing DNS..."
+mkdir -p $TMPDIR/CoreDNS/check-dns
+kubectl -n cattle-system get pods -l app=support-agent -o wide --no-headers | awk '{print $1,$6,$7}' |\
+while IF=',' read -r podname node ip
+do
+  echo "Podname: $podname"
+  echo "Node: $node"
+  echo "IP: $ip"
+  echo "Running check-dns..."
+  if [[ ! $node == "<none>" ]]
+  then
+    kubectl -n cattle-system exec $podname -- /root/check-dns.sh | tee $TMPDIR/CoreDNS/check-dns/$node
+  fi
+done
 echo "####################################################################################"
