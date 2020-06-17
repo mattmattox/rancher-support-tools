@@ -165,6 +165,44 @@ then
   echo "##############################################"
   echo "Weave found"
   mkdir -p $TMPDIR/CNI/Weave
+  kubectl -n kube-system get pods -l k8s-app=weave-net -o wide > $TMPDIR/CNI/Weave/Weave-get-pods-wide
+  kubectl -n kube-system get pods -l k8s-app=weave-net -o yaml > $TMPDIR/CNI/Weave/Weave-get-pods.yaml
+  echo "Collecting ConfigMaps..."
+  mkdir -p $TMPDIR/CNI/Weave/configmap
+  kubectl -n kube-system get configmaps weave-net -o yaml > $TMPDIR/CNI/Weave/configmap/Weave-config.yaml
+  kubectl -n kube-system get configmaps rke-network-plugin -o yaml > $TMPDIR/CNI/Weave/configmap/rke-network-plugin.yaml
+  echo "Collecting Logs..."
+  mkdir -p $TMPDIR/CNI/Weave/logs
+  for pod in $(kubectl get pods -n kube-system -l k8s-app=weave -o name | awk -F '/' '{print $2}')
+  do
+    mkdir -p $TMPDIR/CNI/Weave/logs/"$pod"
+    kubectl logs $pod -n kube-system weave > $TMPDIR/CNI/Weave/logs/"$pod"/weave
+    kubectl logs $pod -n kube-system weave-npc > $TMPDIR/CNI/Weave/logs/"$pod"/weave-npc
+    kubectl logs $pod -n kube-system weave-plugins > $TMPDIR/CNI/Weave/logs/"$pod"/weave-plugins
+  done
+  echo "Collecting Network Info..."
+  for pod in $(kubectl get pods -n kube-system -l k8s-app=weave -o name | awk -F '/' '{print $2}')
+  do
+    echo "########################"
+    echo "Pod: $pod"
+    mkdir -p $TMPDIR/CNI/Weave/networkinfo/"$pod"
+    echo "Running ifconfig -a"
+    kubectl -n kube-system exec -it $pod -c weave -- ifconfig -a > $TMPDIR/CNI/Weave/networkinfo/"$pod"-ifconfig
+    echo "Running route -n"
+    kubectl -n kube-system exec -it $pod -c weave -- route -n > $TMPDIR/CNI/Weave/networkinfo/"$pod"/route
+    echo "Running iptables --list"
+    kubectl -n kube-system exec -it $pod -c weave -- iptables --list > $TMPDIR/CNI/Weave/networkinfo/"$pod"/iptables-list
+    echo "Running iptables-save"
+    kubectl -n kube-system exec -it $pod -c weave -- iptables-save > $TMPDIR/CNI/Weave/networkinfo/"$pod"/iptables-save
+    echo "Running iptables --numeric --verbose --list --table mangle"
+    kubectl -n kube-system exec -it $pod -c weave -- iptables --numeric --verbose --list --table mangle > $TMPDIR/CNI/Weave/networkinfo/"$pod"/iptables-mangle
+    echo "Running iptables --numeric --verbose --list --table nat"
+    kubectl -n kube-system exec -it $pod -c weave -- iptables --numeric --verbose --list --table nat > $TMPDIR/CNI/Weave/networkinfo/"$pod"/iptables-nat
+    echo "Grabbing /etc/cni/net.d"
+    #mkdir -p $TMPDIR/CNI/Weave/networkinfo/"$pod"/net.d
+    kubectl -n kube-system cp -c weave "$pod":/etc/cni/ $TMPDIR/CNI/Weave/networkinfo/"$pod"/cni.d
+    echo "########################"
+  done
   echo "##############################################"
 else
   echo "##############################################"
