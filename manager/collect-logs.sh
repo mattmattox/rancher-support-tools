@@ -157,7 +157,7 @@ then
   kubectl -n kube-system get pods -l k8s-app=canal -o wide > $TMPDIR/CNI/Canal/canal-get-pods-wide
   kubectl -n kube-system get pods -l k8s-app=canal -o yaml > $TMPDIR/CNI/Canal/canal-get-pods.yaml
   echo "Collecting ConfigMaps..."
-  mkdir -p $TMPDIR/CNI/Calico/configmap
+  mkdir -p $TMPDIR/CNI/Canal/configmap
   kubectl -n kube-system get configmaps canal-config -o yaml > $TMPDIR/CNI/Canal/configmap/canal-config.yaml
   kubectl -n kube-system get configmaps rke-network-plugin -o yaml > $TMPDIR/CNI/Canal/configmap/rke-network-plugin.yaml
   echo "Collecting Logs..."
