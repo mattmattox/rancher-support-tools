@@ -55,7 +55,7 @@ echo "##########################################################################
 
 echo "####################################################################################"
 echo "Collecting CNI info..."
-if ! kubectl -n kube-system get pods -l k8s-app=flannel | grep 'No resources found'
+if [[ ! `kubectl -n kube-system get pods -l k8s-app=flannel` == 'No resources found' ]]
 then
   echo "##############################################"
   echo "Flannel found"
