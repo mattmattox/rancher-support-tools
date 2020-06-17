@@ -154,6 +154,48 @@ then
   echo "##############################################"
   echo "Canal found"
   mkdir -p $TMPDIR/CNI/Canal
+  kubectl -n kube-system get pods -l k8s-app=canal -o wide > $TMPDIR/CNI/Canal/canal-get-pods-wide
+  kubectl -n kube-system get pods -l k8s-app=canal -o yaml > $TMPDIR/CNI/Canal/canal-get-pods.yaml
+  echo "Collecting ConfigMaps..."
+  mkdir -p $TMPDIR/CNI/Calico/configmap
+  kubectl -n kube-system get configmaps canal-config -o yaml > $TMPDIR/CNI/Canal/configmap/canal-config.yaml
+  kubectl -n kube-system get configmaps rke-network-plugin -o yaml > $TMPDIR/CNI/Canal/configmap/rke-network-plugin.yaml
+  echo "Collecting Logs..."
+  mkdir -p $TMPDIR/CNI/Canal/logs
+  for pod in $(kubectl get pods -n kube-system -l k8s-app=canal -o name | awk -F '/' '{print $2}')
+  do
+    mkdir -p $TMPDIR/CNI/Canal/logs/"$pod"
+    kubectl logs $pod -n kube-system calico-node > $TMPDIR/CNI/Canal/logs/"$pod"/calico-node
+    kubectl logs $pod -n kube-system install-cni > $TMPDIR/CNI/Canal/logs/"$pod"/install-cni
+    kubectl logs $pod -n kube-system flexvol-driver > $TMPDIR/CNI/Canal/logs/"$pod"/flexvol-driver
+    kubectl logs $pod -n kube-system kube-flannel > $TMPDIR/CNI/Canal/logs/"$pod"/kube-flannel
+  done
+  echo "Collecting Network Info..."
+  for pod in $(kubectl get pods -n kube-system -l k8s-app=canal -o name | awk -F '/' '{print $2}')
+  do
+    echo "########################"
+    echo "Pod: $pod"
+    mkdir -p $TMPDIR/CNI/Canal/networkinfo/"$pod"
+    echo "Running ifconfig -a"
+    kubectl -n kube-system exec -it $pod -c calico-node -- ifconfig -a > $TMPDIR/CNI/Canal/networkinfo/"$pod"-ifconfig
+    echo "Running route -n"
+    kubectl -n kube-system exec -it $pod -c calico-node -- route -n > $TMPDIR/CNI/Canal/networkinfo/"$pod"/route
+    echo "Running iptables --list"
+    kubectl -n kube-system exec -it $pod -c calico-node -- iptables --list > $TMPDIR/CNI/Canal/networkinfo/"$pod"/iptables-list
+    echo "Running iptables-save"
+    kubectl -n kube-system exec -it $pod -c calico-node -- iptables-save > $TMPDIR/CNI/Canal/networkinfo/"$pod"/iptables-save
+    echo "Running iptables --numeric --verbose --list --table mangle"
+    kubectl -n kube-system exec -it $pod -c calico-node -- iptables --numeric --verbose --list --table mangle > $TMPDIR/CNI/Canal/networkinfo/"$pod"/iptables-mangle
+    echo "Running iptables --numeric --verbose --list --table nat"
+    kubectl -n kube-system exec -it $pod -c calico-node -- iptables --numeric --verbose --list --table nat > $TMPDIR/CNI/Canal/networkinfo/"$pod"/iptables-nat
+    echo "Grabbing /etc/cni/net.d"
+    #mkdir -p $TMPDIR/CNI/Canal/networkinfo/"$pod"/net.d
+    kubectl -n kube-system cp -c calico-node "$pod":/etc/cni/net.d $TMPDIR/CNI/Canal/networkinfo/"$pod"/net.d
+    echo "Grabbing /etc/calico"
+    #mkdir -p $TMPDIR/CNI/Calico/networkinfo/"$pod"/calico-etc-config
+    kubectl -n kube-system cp -c calico-node "$pod":/etc/calico $TMPDIR/CNI/Canal/networkinfo/"$pod"/calico-etc-config
+    echo "########################"
+  done
   echo "##############################################"
 elif [[ `kubectl -n kube-system get pods -l k8s-app=weave | wc -l` -gt 0 ]];
 then
