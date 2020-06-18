@@ -212,6 +212,23 @@ fi
 echo "####################################################################################"
 
 echo "####################################################################################"
+echo "Testing overlay..."
+mkdir -p $TMPDIR/CNI/Check-overlay
+kubectl -n cattle-system get pods -l app=support-agent -o wide --no-headers | awk '{print $1,$6,$7}' |\
+while IF=',' read -r podname node ip
+do
+  echo "Podname: $podname"
+  echo "Node: $node"
+  echo "IP: $ip"
+  echo "Running check-overlay..."
+  if [[ ! $node == "<none>" ]]
+  then
+    kubectl -n cattle-system exec $podname -- /root/check-overlay.sh | tee $TMPDIR/CNI/Check-overlay/$node
+  fi
+done
+echo "####################################################################################"
+
+echo "####################################################################################"
 echo "Collecting CoreDNS info..."
 mkdir -p $TMPDIR/CoreDNS
 echo "Getting pods..."
